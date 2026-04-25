@@ -12,12 +12,12 @@ wheels/
 EOF
 
 # Pesos e artefatos de treino do YOLO
-runs/
-*.pt
-*.onnx
-*.torchscript
-*.engine
-wandb/
+# runs/
+# *.pt
+# *.onnx
+# *.torchscript
+# *.engine
+# wandb/
 
 # Caches de ML
 .cache/
