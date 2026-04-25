@@ -1,0 +1,10 @@
+# Path do dataset
+path: /Users/tiago/dev/trabalho_visao_computacional/dataset
+
+# Path relativos
+train: train/images
+val: val/images
+test: test/images
+
+# Nomes das classes usadas nos labels
+names: ['ArmaCurta', 'ArmaLonga']
