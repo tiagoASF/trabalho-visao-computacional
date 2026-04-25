@@ -1,36 +1,47 @@
 from ultralytics import YOLO
 
-def print_metricas(model, particao):
+def print_metricas(model, particao, path_config_yaml):
     if particao not in ('val', 'test'):
-        print('particao inválida')
+        print('particao invalida')
         return
     
     metricas = model.val(data=path_config_yaml, verbose=False, split=particao)
-    print('\n\n-----------------------')
-    print('Metricas particao', particao)
-    print('---------------------------')
-    #Precisao média pegando 50% de coincidencia entre as imagens para cada classe
-    print(f'   mAP@0.50          : {metricas.box.map50:0.3f}')
-    print(f'   mAP@0.50:0.95     : {metricas.box.map:0.3f}')
-    print(f'   Precisao media    : {metricas.box.mp:0.3f}')
-    print(f'   Recall medio      : {metricas.box.mr:0.3f}')
-    print(60*'-')
+    
+    print('\n' + '='*70)
+    print(f'  Métricas — partição: {particao}')
+    print('='*70)
+    
+    # Métricas agregadas (médias entre classes)
+    print(f'  mAP@0.50              : {metricas.box.map50:.3f}')
+    print(f'  mAP@0.50:0.95         : {metricas.box.map:.3f}')
+    print(f'  Precisão média        : {metricas.box.mp:.3f}')
+    print(f'  Recall médio          : {metricas.box.mr:.3f}')
+    
+    # Métricas por classe
+    print('-'*70)
+    print(f'  {"Classe":<15} {"P":>8} {"R":>8} {"AP@50":>10} {"AP@50:95":>10}')
+    print('-'*70)
     for i, cls_idx in enumerate(metricas.box.ap_class_index):
         nome = model.names[cls_idx]
-        ap   = metricas.box.ap50[i]
-        print(f'  {int(cls_idx)} {nome:<15} AP@50 = {ap:.4f}')
+        p     = metricas.box.p[i]       # precisão da classe
+        r     = metricas.box.r[i]       # recall da classe
+        ap50  = metricas.box.ap50[i]    # AP@50 da classe
+        ap    = metricas.box.ap[i]      # AP@50:95 da classe (média de IoU 0.5 a 0.95)
+        f1    = (2 * p * r / (p + r)) if (p + r) > 0 else 0.0
+        print(f'  {nome:<15} {p:>8.3f} {r:>8.3f} {ap50:>10.3f} {ap:>10.3f}   F1={f1:.3f}')
+    print('='*70 + '\n')
 
 if __name__ == '__main__':
     # instancia modelo inicial
     yolo_custom = YOLO("yolov8n.pt")
     # dados identificacao do projeto/modelo
-    nome_projeto = "transfer_ep30"
+    nome_projeto = "transfer_ep100"
     nome_modelo = "yolo_transfer"
     path_config_yaml = 'config.yaml'
     # treino
     results_treino = yolo_custom.train(
         data=path_config_yaml,
-        epochs=30,
+        epochs=100,
         imgsz=640,
         batch=8,
         device='mps',
@@ -47,6 +58,7 @@ if __name__ == '__main__':
     # instancia melhor época modelo treinado
     yolo_best = YOLO(best_model_path)    
 
-    print_metricas(yolo_best, 'val')
-    print_metricas(yolo_best, 'test')
+   # avaliação nas duas partições
+    print_metricas(yolo_best, 'val', path_config_yaml)
+    print_metricas(yolo_best, 'test', path_config_yaml)
 
