@@ -143,78 +143,6 @@ patience=15, plots=True, amp=False
 ```
  
 ---
- ## Resultados Experimentais
- 
-Foram conduzidos **dois experimentos** variando o número máximo de épocas para investigar o efeito do tempo de treino em regime de poucos dados.
- 
-### Experimento 1 — 30 épocas
- 
-Treino completou todas as épocas (sem early stopping).
- 
-| Métrica | Validação | Teste |
-|---------|-----------|-------|
-| mAP@0.5 | 0.842 | **0.644** |
-| mAP@0.5:0.95 | 0.476 | **0.301** |
-| Precisão média | 0.861 | 0.719 |
-| Recall médio | 0.767 | 0.550 |
- 
-**AP@50 por classe (teste):**
-- ArmaCurta: 0.570
-- ArmaLonga: 0.718
-  
-### Experimento 2 — 100 épocas (parou em 68 por early stopping)
- 
-Melhor modelo selecionado na época 68.
- 
-| Métrica | Validação | Teste |
-|---------|-----------|-------|
-| mAP@0.5 | 0.885 | **0.535** |
-| mAP@0.5:0.95 | 0.518 | **0.281** |
-| Precisão média | 0.930 | 0.514 |
-| Recall médio | 0.850 | 0.600 |
- 
-**AP@50 por classe (teste):**
-- ArmaCurta: 0.528
-- ArmaLonga: 0.541
-### Velocidade de inferência
- 
-Em CPU (Apple M3 Pro): **~22-44 ms/frame** (~22-45 FPS).
- 
----
-## Discussão
- 
-### Treinar mais piorou a generalização
- 
-Embora o experimento de 100 épocas atinja **maiores métricas no conjunto de validação** (mAP@0.5 = 0.885 vs 0.842), ele apresenta **piores métricas no conjunto de teste** (mAP@0.5 = 0.535 vs 0.644). A diferença entre val e test também aumenta:
- 
-| Run | Gap val−test (mAP@0.5) |
-|-----|------------------------|
-| 30 épocas | 0.198 |
-| 100 épocas | 0.350 |
- 
-Isso é evidência de **overfitting indireto via early stopping** em conjunto de validação muito pequeno. O `patience=15`, que deveria proteger contra overfitting, falha quando o val tem apenas 15 imagens: pequenas oscilações de métrica são irrelevantes, e o modelo selecionado é aquele que aparentemente se ajustou às 15 imagens específicas, não o que generaliza melhor.
- 
-### Sinal preocupante na classe ArmaLonga
- 
-A AP@50 de ArmaLonga no validação é altíssima nos dois runs (0.942 e 0.995), mas cai dramaticamente no teste (0.718 e 0.541). Hipóteses:
- 
-1. **Possível data leakage** entre train e val — imagens visualmente similares de mesma fonte distribuídas entre splits.
-2. **Heterogeneidade entre val e test** — splits aleatórios pequenos não preservam distribuições.
-3. **Variância estatística** com 6 instâncias no val.
-A queda de até 45 pontos entre val e test sugere que a hipótese 1 contribui significativamente.
- 
-### Limitações de dataset
- 
-Com 131 imagens totais, o estudo opera com **dados insuficientes** para detecção de objetos. Datasets de produção, ou de estudo mais aprofundados tipicamente usam muito mais imagens.
- 
-### Heterogeneidade visual das classes
- 
-A classificação operacional (ArmaCurta / ArmaLonga) agrupa subtipos visualmente distintos:
-- **ArmaCurta**: pistolas semiautomáticas e revólveres
-- **ArmaLonga**: fuzis de assalto, espingardas, carabinas, submetralhadoras, etc.
-Com ~55–59 exemplos por classe, cada subtipo tem poucos representantes. O modelo aprende as formas dominantes mas dificilmente generaliza para subtipos sub-representados.
- 
----
  
 ## Modelo Recomendado
  
@@ -233,7 +161,7 @@ Métricas finais (modelo recomendado, conjunto de teste):
 | Recall médio | 0.550 |
  
 ---
-## Limitações e Trabalhos Futuros
+## Limitações e melhorias
  
 ### Limitações reconhecidas
  
